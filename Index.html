@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Décodeur Rotatif de la Cité</title>
+    <!-- Chargement de Tailwind CSS pour un design moderne et responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configuration de la police Inter et ajustements de base */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        /* Style pour la zone de défilement du code */
+        .code-display {
+            min-height: 8rem;
+            max-height: 15rem;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="w-full max-w-md bg-white p-6 md:p-8 rounded-xl shadow-2xl border border-gray-100">
+
+        <!-- En-tête -->
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Décodeur Clandestin</h1>
+        <p class="text-center text-sm text-red-700 mb-6 font-medium">
+            Réseau VIOLETTE - Clairvivre 1943
+        </p>
+
+        <!-- Champ du Message Codé -->
+        <div class="mb-5">
+            <label for="codedMessage" class="block text-sm font-medium text-gray-700 mb-2">
+                Message Codé (Ex: Y Z G J W H Z Q T X J)
+            </label>
+            <textarea id="codedMessage" rows="3" class="w-full p-3 border border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition duration-150 shadow-inner" placeholder="Entrez le message codé ici..."></textarea>
+        </div>
+
+        <!-- Contrôle du Décalage (Clé de Chiffrement) -->
+        <div class="mb-6 bg-red-50 p-4 rounded-lg">
+            <label for="shift" class="block text-sm font-medium text-red-800 mb-3">
+                Décalage (Clé Secrète) : <span id="shiftValue" class="font-bold text-lg">0</span> positions
+            </label>
+            <input type="range" id="shift" min="0" max="25" value="0" class="w-full h-2 bg-red-200 rounded-lg appearance-none cursor-pointer range-lg focus:outline-none focus:ring-2 focus:ring-red-600">
+            <p class="text-xs text-red-600 mt-2 italic">
+                Glissez le curseur pour trouver la clé numérique correcte (entre 1 et 25).
+            </p>
+        </div>
+
+        <!-- Résultat Décodé -->
+        <div class="mb-5">
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">Message Décodé :</h3>
+            <div id="decodedMessage" class="code-display bg-gray-100 text-gray-900 p-4 rounded-lg font-mono text-xl md:text-2xl border-2 border-dashed border-gray-300 transition duration-300">
+                [Le texte décodé apparaîtra ici.]
+            </div>
+        </div>
+
+        <!-- Bouton d'Action (facultatif car la saisie est dynamique) -->
+        <button onclick="decodeMessage()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-red-500 focus:ring-opacity-50">
+            Déchiffrer
+        </button>
+
+    </div>
+
+    <script>
+        // Fonction principale de déchiffrement César
+        function caesarCipher(text, shift) {
+            let result = '';
+            // Le décalage doit être un nombre négatif pour le déchiffrement
+            const decryptShift = -shift;
+
+            for (let i = 0; i < text.length; i++) {
+                let char = text[i];
+                let charCode = text.charCodeAt(i);
+
+                // Gère les majuscules (A=65 à Z=90)
+                if (charCode >= 65 && charCode <= 90) {
+                    // Applique le décalage négatif et s'assure de boucler dans l'alphabet (modulo 26)
+                    let decryptedCharCode = ((charCode - 65 + decryptShift) % 26 + 26) % 26 + 65;
+                    result += String.fromCharCode(decryptedCharCode);
+                }
+                // Gère les espaces et la ponctuation intacts
+                else {
+                    result += char;
+                }
+            }
+            return result;
+        }
+
+        // Fonction pour mettre à jour l'affichage
+        function updateDecoder() {
+            // Convertit le message en majuscules pour le chiffrement
+            const codedMessage = document.getElementById('codedMessage').value.toUpperCase();
+            // Récupère la valeur du curseur
+            const shift = parseInt(document.getElementById('shift').value, 10);
+
+            // Mettre à jour la valeur affichée du décalage
+            document.getElementById('shiftValue').textContent = shift;
+
+            // Déchiffrer le message
+            const decodedText = caesarCipher(codedMessage, shift);
+
+            // Afficher le résultat
+            const outputElement = document.getElementById('decodedMessage');
+            outputElement.textContent = decodedText.trim() === '' ? '[Le texte décodé apparaîtra ici.]' : decodedText;
+
+            // Logique pour mettre en évidence la solution (Décalage = 5, Mot = TUBERCULOSE)
+            const solutionWord = "TUBERCULOSE";
+            
+            // Nettoie les espaces du texte décodé pour la comparaison
+            const cleanedDecodedText = decodedText.replace(/\s/g, ''); 
+
+            // Vérifie si le décalage est 5 ET si le mot déchiffré contient "TUBERCULOSE"
+            if (shift === 5 && cleanedDecodedText.includes(solutionWord)) {
+                 // Bonne réponse trouvée : fond vert
+                 outputElement.classList.add('bg-green-100', 'border-green-500');
+                 outputElement.classList.remove('bg-gray-100', 'border-gray-300');
+                 outputElement.textContent = solutionWord; // Affiche clairement la solution
+            } else {
+                 // Réponse non trouvée : fond gris par défaut
+                 outputElement.classList.remove('bg-green-100', 'border-green-500');
+                 outputElement.classList.add('bg-gray-100', 'border-gray-300');
+            }
+        }
+
+        // Ajout des écouteurs d'événements pour la mise à jour dynamique
+        document.addEventListener('DOMContentLoaded', () => {
+            const codedMessageInput = document.getElementById('codedMessage');
+            const shiftInput = document.getElementById('shift');
+
+            // Ajout du nouveau message codé par défaut pour faciliter le test
+            codedMessageInput.value = "Y Z G J W H Z Q T X J"; // Corrigé pour shift=5 -> TUBERCULOSE
+
+            codedMessageInput.addEventListener('input', updateDecoder);
+            shiftInput.addEventListener('input', updateDecoder);
+
+            // Appel initial pour afficher le message par défaut
+            updateDecoder();
+        });
+
+        // Fonction de secours, bien que updateDecoder soit appelé dynamiquement
+        function decodeMessage() {
+            updateDecoder();
+        }
+    </script>
+
+</body>
+</html>
